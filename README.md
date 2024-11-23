@@ -9,18 +9,30 @@
 
 This project implements **custom Naive Bayes and k-Nearest Neighbors (k-NN) classifiers** to identify email spam. These classifiers provide a foundational understanding of supervised machine learning techniques for text classification tasks.
 
-## 🚀 Key Features
+## 🚀 **Key Features**
 
-### **Naive Bayes Classifier**
-- **Multinomial Likelihood:** Suited for discrete data (e.g., word counts in emails).
-- **Class Priors and Likelihoods:** Calculates the probability of spam/ham emails based on training data.
-- **Laplace Smoothing:** Avoids zero probabilities by adding smoothing to the likelihoods.
-- **Logarithmic Optimization:** Uses log probabilities for numerical stability.
+### **Custom Naive Bayes Classifier**
+- **Multinomial Likelihood**: Suited for discrete data such as word counts (e.g., email classification).
+- **Class Priors and Likelihoods**: Calculates the probability of each class (e.g., spam or ham) based on training data and class priors.
+- **Laplace Smoothing**: Prevents zero probabilities for unseen features by applying a smoothing factor to the likelihoods.
+- **Logarithmic Optimization**: Uses log probabilities for numerical stability, especially when handling large datasets.
 
-### **k-Nearest Neighbors Classifier**
-- **Custom Distance Metric:** Computes distances for feature-rich datasets.
-- **k Selection:** Allows flexibility in the number of neighbors for classification.
-- **Majority Voting:** Predicts class based on the most frequent label among k nearest neighbors.
+### **Custom k-Nearest Neighbors Classifier**
+- **Custom Distance Metric**: Calculates distances between data points based on custom feature-rich datasets.
+- **k Selection**: Provides flexibility in choosing the number of neighbors (`k`) for classification, allowing for fine-tuning of the model.
+- **Majority Voting**: Makes predictions based on the most frequent label among the `k` nearest neighbors.
+
+### **Email Preprocessor for `.txt` Files**
+- **Text Preprocessing**: Tokenizes and cleans raw email text data by removing stopwords, punctuation, and applying lowercasing.
+- **Feature Extraction**: Converts the preprocessed text into numerical feature vectors, which can be directly used for Naive Bayes and k-Nearest Neighbors models.
+- **Support for `.txt` Files**: Reads emails from `.txt` files, extracting the content for classification tasks.
+
+### **Custom Implementations (No External Libraries)**
+- **No External Libraries**: Both Naive Bayes and k-NN classifiers are implemented from scratch without relying on `sklearn`, ensuring a clear understanding of the underlying algorithms.
+- **Numeric Data Handling**: Both models are designed to handle continuous numerical features in addition to text data.
+- **Model Evaluation**: Implements evaluation metrics such as accuracy and confusion matrix to assess the models’ performance.
+- **Core Python Libraries**: Uses core Python libraries like `numpy`, `pandas`, and custom helper functions to preprocess data and build the models.
+
 
 ## 🔍 Implementation Details
 
@@ -43,6 +55,22 @@ This project implements **custom Naive Bayes and k-Nearest Neighbors (k-NN) clas
 - **Approach:**
   - Calculates distances between test samples and training samples.
   - Assigns the most frequent label among k nearest neighbors.
+
+### **Email Preprocessor Implementation**
+- **File:** `email_preprocessor.py`
+- **Methods:**
+  - `tokenize_words(text)`: Tokenizes a given email text into a list of words.
+  - `count_words(email_path='data/enron')`: Counts the frequency of each word in the entire dataset.
+  - `find_top_words(word_freq, num_features=200)`: Retrieves the top N most frequent words from the dataset.
+  - `make_feature_vectors(top_words, num_emails, email_path='data/enron')`: Generates feature vectors for each email based on the top N words.
+  - `make_train_test_sets(features, y, test_prop=0.2, shuffle=True)`: Splits the dataset into training and testing sets.
+  - `retrieve_emails(inds, email_path='data/enron')`: Retrieves emails based on indices from the dataset.
+- **Approach:**
+  - **Tokenization:** Tokenizes email text into words, normalizing them to lowercase.
+  - **Word Counting:** Counts word frequencies across all emails in the dataset.
+  - **Top Words:** Selects the most frequent words as features for machine learning algorithms.
+  - **Feature Vector Construction:** Constructs a vector of word counts for each email, representing its feature set.
+  - **Train-Test Split:** Divides the dataset into training and testing subsets for model evaluation.
 
 ## 🎨 Visual Examples
 
@@ -233,9 +261,7 @@ plt.show()
 
 ### Naive Bayes Classifier
 
-This project demonstrates how to build a binary classifier using a **Naive Bayes algorithm**. The project uses a custom Naive Bayes implementation, with a dataset named `yourdataset.csv`. The guide will walk you through the steps of data preparation, training, and evaluation using the custom classifier.
-
----
+The implementation of the Naive Bayes classification algorithm using custom Python code, designed to handle both text and numeric datasets. The model is trained, tested, and evaluated on two distinct datasets: a text dataset (such as emails) and a numeric dataset (such as feature vectors from various data sources). This approach eliminates the need for external machine learning libraries, highlighting a deep understanding of core machine learning concepts and feature engineering.
 
 ## Prerequisites
 
@@ -263,7 +289,7 @@ Example format of `yourdataset.csv`:
 - Features: `feature1`, `feature2`, `feature3`
 - Label: `label` (0 = class A, 1 = class B)
 
-### Step 1: Import Libraries
+### 1. Import Libraries
 
 Load the necessary libraries to handle data and implement the classifier.
 
@@ -273,68 +299,19 @@ import pandas as pd
 from naive_bayes import NaiveBayes  # Custom Naive Bayes implementation
 ```
 
-### **1. Import Required Libraries**
+### 2. Load the Dataset
+Load the dataset from a CSV file using pandas.
 
 ```python
-import os
-import random
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
+data = pd.read_csv('yourdataset.csv')
 ```
 
-### 2. Load and Visualize Data
-Load the dataset and split it into features (X) and labels (y).
+### 3. Extract Features and Labels
+Extract feature columns (input variables) into X. Extract target labels into y.
 
 ```python
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Set plotting styles and options
-plt.style.use(['seaborn-v0_8-colorblind', 'seaborn-v0_8-darkgrid'])
-plt.rcParams.update({'font.size': 20})
-np.set_printoptions(suppress=True, precision=5)
-
-# Load the dataset
-yourdataset_train = np.loadtxt('data/yourdataset.csv', skiprows=1, delimiter=',')
-yourdataset_val = np.loadtxt('data/yourdataset.csv', skiprows=1, delimiter=',')
-
-# Split features (X) and labels (y)
-train_y = yourdataset_train[:, -1]  # Assuming the target is the last column
-val_y = yourdataset_val[:, -1]
-
-train_X = yourdataset_train[:, :-1]  # All columns except the last
-val_X = yourdataset_val[:, :-1]
-
-# Create plots
-fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-
-# Training set plot
-scatter_train = axes[0].scatter(train_X[:, 0], train_X[:, 1], c=train_y, cmap='viridis')
-axes[0].set_title('YourDataset - Training Set')
-axes[0].set_xlabel('Feature 1')
-axes[0].set_ylabel('Feature 2')
-
-# Validation set plot
-scatter_val = axes[1].scatter(val_X[:, 0], val_X[:, 1], c=val_y, cmap='viridis')
-axes[1].set_title('YourDataset - Validation Set')
-axes[1].set_xlabel('Feature 1')
-axes[1].set_ylabel('Feature 2')
-
-# Add color bar
-cbar = fig.colorbar(scatter_train, ax=axes, location='right', shrink=0.8, pad=0.1)
-cbar.set_label('Class')
-
-# Finalize and show the plot
-plt.tight_layout()
-plt.show()
-```
-
-### 3. Train the Classifier
-Train the classifier on the dataset.
-
-```python
-classifier.train(X, y)
+X = data[['feature1', 'feature2', 'feature3']].values
+y = data['label'].values
 ```
 
 ### 4. Predict Using KNN
