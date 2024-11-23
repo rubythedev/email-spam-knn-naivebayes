@@ -100,7 +100,7 @@ A comparison of the classification accuracies between the Naive Bayes and k-NN m
 
 Below is a demonstration of the **Naive Bayes** and **KNN** Classifier on a numerical dataset. You can use it for numeric datasets (i.e., CSV files). Follow the steps below to get started.
 
-### Prerequisites
+### KNN Classifier
 
 Before running the project, make sure you have the following libraries installed in your Python environment:  
 - **NumPy**  
@@ -123,263 +123,271 @@ import os
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.spatial import distance
-import kmeans
 import pandas as pd
-from matplotlib.image import imread
 ```
 
-### 2. Load Your Data
-
-#### For Numerical Data:
-To start, load your dataset (e.g., a CSV file) using Pandas. Then, convert it into a NumPy array to prepare it for the K-Means algorithm.
+### 2. Load and Visualize Data
+Load the dataset and split it into features (X) and labels (y).
 
 ```python
-# Load a CSV file as a DataFrame
-df = pd.read_csv('data/your_dataset.csv')
+import numpy as np
+import matplotlib.pyplot as plt
 
-# Convert the DataFrame to a NumPy array
-your_data = df.values
+# Set plotting styles and options
+plt.style.use(['seaborn-v0_8-colorblind', 'seaborn-v0_8-darkgrid'])
+plt.rcParams.update({'font.size': 20})
+np.set_printoptions(suppress=True, precision=5)
 
-# Preview the data
-print(your_data)
+# Load the dataset
+yourdataset_train = np.loadtxt('data/yourdataset.csv', skiprows=1, delimiter=',')
+yourdataset_val = np.loadtxt('data/yourdataset.csv', skiprows=1, delimiter=',')
+
+# Split features (X) and labels (y)
+train_y = yourdataset_train[:, -1]  # Assuming the target is the last column
+val_y = yourdataset_val[:, -1]
+
+train_X = yourdataset_train[:, :-1]  # All columns except the last
+val_X = yourdataset_val[:, :-1]
+
+# Create plots
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Training set plot
+scatter_train = axes[0].scatter(train_X[:, 0], train_X[:, 1], c=train_y, cmap='viridis')
+axes[0].set_title('YourDataset - Training Set')
+axes[0].set_xlabel('Feature 1')
+axes[0].set_ylabel('Feature 2')
+
+# Validation set plot
+scatter_val = axes[1].scatter(val_X[:, 0], val_X[:, 1], c=val_y, cmap='viridis')
+axes[1].set_title('YourDataset - Validation Set')
+axes[1].set_xlabel('Feature 1')
+axes[1].set_ylabel('Feature 2')
+
+# Add color bar
+cbar = fig.colorbar(scatter_train, ax=axes, location='right', shrink=0.8, pad=0.1)
+cbar.set_label('Class')
+
+# Finalize and show the plot
+plt.tight_layout()
+plt.show()
 ```
 
-#### For Image Data:
-To start, load your dataset (e.g., a CSV file) using Pandas. Then, convert it into a NumPy array to prepare it for the K-Means algorithm.
+### 3. Train the Classifier
+Train the classifier on the dataset.
 
 ```python
-# Load an image
-image = imread('data/your_image.jpg')
-
-# Flatten the image
-def flatten(img):
-    '''Flattens an image to N 1D vectors.'''
-    num_rows, num_cols, rgb = img.shape    
-    flattened_img = img.reshape(num_rows * num_cols, rgb)
-    return flattened_img
-
-flattened_image = flatten(image)
-
-# Preview the flattened image shape
-print(flattened_image.shape)
+classifier.train(X, y)
 ```
 
-### 3. Prepare Your Data (For Image or Numerical Data)
-
-#### For Image Data:
-If you're working with images, you need to load the image and flatten it into 1D vectors, which K-Means can use as data points for clustering. This is necessary because each pixel in the image is represented by its RGB (Red, Green, Blue) values, and these need to be treated as individual data points in the clustering process.
+### 4. Predict Using KNN
+Use the trained classifier to make predictions. Choose a value for k (e.g., k=1 or k=2).
 
 ```python
-# Load an image
-image = imread('data/your_image.jpg')
-
-# Flatten the image to 1D vectors (each pixel's RGB values)
-def flatten(img):
-    '''Flattens an image to N 1D vectors.'''
-    num_rows, num_cols, rgb = img.shape    
-    return img.reshape(num_rows * num_cols, rgb)
-
-# Flatten the image
-flattened_image = flatten(image)
-
-# Preview the flattened image shape (total pixels x 3 RGB values)
-print(flattened_image.shape)
-```
-
-### 4. Initialize K-Means Class
-
-Now that you have your data prepared, it's time to initialize the **K-Means** class, where you'll specify the number of clusters (k) and apply the algorithm to your data.
-
-#### For Numerical Data:
-```
-# Create an instance of the KMeans class with the input data
-cluster = kmeans.KMeans(your_data)
-
-# Specify the number of clusters
 k = 3
-
-# Initialize the centroids
-init_centroids = cluster.initialize(k)
-
-# Preview the initial centroids
-print(init_centroids)
+y_pred = classifier.predict(X, k)
 ```
 
-#### For Image Data:
+### 5. Evaluate Model Accuracy
+Calculate the accuracy of the predictions.
+
 ```python
-# Create an instance of the KMeans class with the flattened image data
-image_cluster = kmeans.KMeans(flattened_image)
-
-# Specify the number of clusters
-k = 5
-
-# Initialize the centroids
-image_init_centroids = image_cluster.initialize(k)
-
-# Preview the initial centroids
-print(image_init_centroids)
+accuracy = classifier.accuracy(y, y_pred)
+print(f'Accuracy with K={k}: {accuracy:.2f}')
 ```
+### 6. Find the Best k Value
+To find the optimal k for your dataset, compute accuracy for a range of k values and visualize the results.
 
-### 5. Assign Data Points to Clusters (Update Labels)
-
-After initializing the centroids, the next step is to assign each data point to its closest centroid, thereby forming clusters.
-
-#### For Numerical Data:
 ```python
-# Assign data points to the nearest centroids, producing cluster labels
-new_labels = cluster.update_labels(init_centroids)
+k_values = list(range(1, 16))
+accuracies = []
 
-# Preview the new labels (which data points belong to which clusters)
-print(new_labels)
-```
+for k in k_values:
+    y_pred = classifier.predict(X, k)
+    acc = classifier.accuracy(y, y_pred)
+    accuracies.append(acc)
 
-#### For Image Data:
-```python
-# Assign image pixels (data points) to the nearest centroids
-image_new_labels = image_cluster.update_labels(image_init_centroids)
-
-# Preview the new labels for image data
-print(image_new_labels)
-```
-
-### 6. Update Centroids
-
-The next step is to update the centroids based on the mean of the data points assigned to each cluster. 
-
-#### For Numerical Data:
-```python
-# Update the centroids and calculate the difference between the new and previous centroids
-new_centroids, diff_from_prev_centroids = cluster.update_centroids(k, new_labels, init_centroids)
-
-# Preview the new centroids
-print(new_centroids)
-```
-
-#### For Image Data:
-```python
-# Update the centroids and calculate the difference for image data
-image_new_centroids, image_diff_from_prev_centroids = image_cluster.update_centroids(k, image_new_labels, image_init_centroids)
-
-# Preview the updated centroids for the image data
-print(image_new_centroids)
-```
-
-### 7. Perform the Clustering Process
-
-Now, you're ready to run the K-Means clustering process for your data with the chosen number of clusters.
-
-#### For Numerical Data:
-```python
-# Perform the clustering process
-cluster.cluster(k)
-
-# Preview the clustered data
-cluster.plot_clusters()
-
-# Display the plot
+# Plot accuracy vs. k
+plt.figure(figsize=(10, 6))
+plt.plot(k_values, accuracies, marker='o')
+plt.xlabel('k')
+plt.ylabel('Accuracy')
+plt.title('Accuracy vs. k - YourDataset')
+plt.grid(True)
 plt.show()
 ```
 
-#### For Image Data:
+### 7. Visualize Decision Boundaries
+Visualize how the classifier separates classes in the dataset.
+
 ```python
-# Perform the clustering process for image data
-image_cluster.cluster(k)
+best_k = 3  # Replace with the optimal k value
+n_sample_pts = 100  # Number of points to sample for visualization
+classifier.plot_predictions(best_k, n_sample_pts)
 
-# Replace colors in the image with the centroid colors
-image_cluster.replace_color_with_centroid()
-
-# Reshape the compressed image back to its original shape
-compressed_image = np.reshape(image_cluster.data, image.shape)
-
-# Plot the original and compressed images side by side
-fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-
-# Plot original image
-ax[0].imshow(image)
-ax[0].axis('off')
-ax[0].set_title('Original Image')
-
-# Plot compressed image
-ax[1].imshow(compressed_image)
-ax[1].axis('off')
-ax[1].set_title('Compressed Image')
-
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.title('Class Boundaries - YourDataset')
 plt.show()
 ```
 
-### 8. Evaluate Your Model: The Elbow Method
+### Naive Bayes Classifier
 
-The **Elbow Method** is a useful technique to determine the optimal number of clusters (`k`) for your data. This method plots the sum of squared distances (inertia) against various values of `k` to find the point where adding more clusters provides diminishing returns.
+This project demonstrates how to build a binary classifier using a **Naive Bayes algorithm**. The project uses a custom Naive Bayes implementation, with a dataset named `yourdataset.csv`. The guide will walk you through the steps of data preparation, training, and evaluation using the custom classifier.
 
-#### For Numerical Data:
+---
+
+## Prerequisites
+
+1. Python installed on your system (3.7 or later recommended).
+2. Required libraries:
+   - `numpy`
+   - `pandas`
+3. A CSV file named `yourdataset.csv`.
+
+---
+
+## Dataset Format
+
+Your dataset should include:
+- **Features:** Numerical values representing the input data for classification.
+- **Labels:** A column indicating whether the record belongs to class "0" (e.g., class A) or "1" (e.g., class B).
+
+Example format of `yourdataset.csv`:
+
+| feature1 | feature2 | feature3 | label |
+|----------|----------|----------|-------|
+| 1.2      | 0.8      | 3.1      | 1     |
+| 2.1      | 1.1      | 0.9      | 0     |
+
+- Features: `feature1`, `feature2`, `feature3`
+- Label: `label` (0 = class A, 1 = class B)
+
+### Step 1: Import Libraries
+
+Load the necessary libraries to handle data and implement the classifier.
+
 ```python
-# Set the maximum number of clusters to evaluate
-max_k = 10
+import numpy as np
+import pandas as pd
+from naive_bayes import NaiveBayes  # Custom Naive Bayes implementation
+```
 
-# Generate the elbow plot
-cluster.elbow_plot(max_k)
-plt.title("Elbow Plot (Numerical Data)")
-plt.xlabel("Number of Clusters (k)")
-plt.ylabel("Inertia")
+### **1. Import Required Libraries**
+
+```python
+import os
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+```
+
+### 2. Load and Visualize Data
+Load the dataset and split it into features (X) and labels (y).
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Set plotting styles and options
+plt.style.use(['seaborn-v0_8-colorblind', 'seaborn-v0_8-darkgrid'])
+plt.rcParams.update({'font.size': 20})
+np.set_printoptions(suppress=True, precision=5)
+
+# Load the dataset
+yourdataset_train = np.loadtxt('data/yourdataset.csv', skiprows=1, delimiter=',')
+yourdataset_val = np.loadtxt('data/yourdataset.csv', skiprows=1, delimiter=',')
+
+# Split features (X) and labels (y)
+train_y = yourdataset_train[:, -1]  # Assuming the target is the last column
+val_y = yourdataset_val[:, -1]
+
+train_X = yourdataset_train[:, :-1]  # All columns except the last
+val_X = yourdataset_val[:, :-1]
+
+# Create plots
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+# Training set plot
+scatter_train = axes[0].scatter(train_X[:, 0], train_X[:, 1], c=train_y, cmap='viridis')
+axes[0].set_title('YourDataset - Training Set')
+axes[0].set_xlabel('Feature 1')
+axes[0].set_ylabel('Feature 2')
+
+# Validation set plot
+scatter_val = axes[1].scatter(val_X[:, 0], val_X[:, 1], c=val_y, cmap='viridis')
+axes[1].set_title('YourDataset - Validation Set')
+axes[1].set_xlabel('Feature 1')
+axes[1].set_ylabel('Feature 2')
+
+# Add color bar
+cbar = fig.colorbar(scatter_train, ax=axes, location='right', shrink=0.8, pad=0.1)
+cbar.set_label('Class')
+
+# Finalize and show the plot
+plt.tight_layout()
 plt.show()
 ```
 
-#### For Image Data:
-```python
-# Set the maximum number of clusters to evaluate
-max_k = 10
+### 3. Train the Classifier
+Train the classifier on the dataset.
 
-# Generate the elbow plot for the image
-image_cluster.elbow_plot(max_k)
-plt.title("Elbow Plot (Image Data)")
-plt.xlabel("Number of Clusters (k)")
-plt.ylabel("Inertia")
+```python
+classifier.train(X, y)
+```
+
+### 4. Predict Using KNN
+Use the trained classifier to make predictions. Choose a value for k (e.g., k=1 or k=2).
+
+```python
+k = 3
+y_pred = classifier.predict(X, k)
+```
+
+### 5. Evaluate Model Accuracy
+Calculate the accuracy of the predictions.
+
+```python
+accuracy = classifier.accuracy(y, y_pred)
+print(f'Accuracy with K={k}: {accuracy:.2f}')
+```
+### 6. Find the Best k Value
+To find the optimal k for your dataset, compute accuracy for a range of k values and visualize the results.
+
+```python
+k_values = list(range(1, 16))
+accuracies = []
+
+for k in k_values:
+    y_pred = classifier.predict(X, k)
+    acc = classifier.accuracy(y, y_pred)
+    accuracies.append(acc)
+
+# Plot accuracy vs. k
+plt.figure(figsize=(10, 6))
+plt.plot(k_values, accuracies, marker='o')
+plt.xlabel('k')
+plt.ylabel('Accuracy')
+plt.title('Accuracy vs. k - YourDataset')
+plt.grid(True)
 plt.show()
 ```
 
-### 9. Batch Clustering (Optional)
+### 7. Visualize Decision Boundaries
+Visualize how the classifier separates classes in the dataset.
 
-If you want to experiment with batch clustering, you can perform clustering in batches rather than iterating over the entire dataset all at once. This can be useful for large datasets.
-
-#### For Numerical Data:
 ```python
-# Perform batch clustering
-cluster.cluster_batch(k=3, n_iter=10)
+best_k = 3  # Replace with the optimal k value
+n_sample_pts = 100  # Number of points to sample for visualization
+classifier.plot_predictions(best_k, n_sample_pts)
 
-# Plot the clustered data
-cluster.plot_clusters()
-
-# Display the plot
+plt.xlabel('Feature 1')
+plt.ylabel('Feature 2')
+plt.title('Class Boundaries - YourDataset')
 plt.show()
 ```
 
-#### For Image Data:
-```python
-# Perform batch clustering for image data
-image_cluster.cluster_batch(k=5, n_iter=20)
-
-# Replace colors in the image with the centroid colors
-image_cluster.replace_color_with_centroid()
-
-# Reshape the compressed image back to its original shape
-compressed_image_batch = np.reshape(image_cluster.data, image.shape)
-
-# Plot the original and compressed images side by side
-fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-
-# Plot original image
-ax[0].imshow(image)
-ax[0].axis('off')
-ax[0].set_title('Original Image')
-
-# Plot compressed image
-ax[1].imshow(compressed_image_batch)
-ax[1].axis('off')
-ax[1].set_title('Compressed Image (Batch Clustering)')
-
-plt.show()
-```
 
 ### 10. Final Thoughts
 
