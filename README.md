@@ -144,7 +144,7 @@ Install them using `pip`:
 pip install numpy pandas matplotlib scipy
 ```
 
-### **1. Import Required Libraries**
+#### **1. Import Required Libraries**
 
 ```python
 import os
@@ -154,7 +154,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 ```
 
-### 2. Load and Visualize Data
+#### 2. Load and Visualize Data
 Load the dataset and split it into features (X) and labels (y).
 
 ```python
@@ -201,14 +201,14 @@ plt.tight_layout()
 plt.show()
 ```
 
-### 3. Train the Classifier
+#### 3. Train the Classifier
 Train the classifier on the dataset.
 
 ```python
 classifier.train(X, y)
 ```
 
-### 4. Predict Using KNN
+#### 4. Predict Using KNN
 Use the trained classifier to make predictions. Choose a value for k (e.g., k=1 or k=2).
 
 ```python
@@ -216,14 +216,14 @@ k = 3
 y_pred = classifier.predict(X, k)
 ```
 
-### 5. Evaluate Model Accuracy
+#### 5. Evaluate Model Accuracy
 Calculate the accuracy of the predictions.
 
 ```python
 accuracy = classifier.accuracy(y, y_pred)
 print(f'Accuracy with K={k}: {accuracy:.2f}')
 ```
-### 6. Find the Best k Value
+#### 6. Find the Best k Value
 To find the optimal k for your dataset, compute accuracy for a range of k values and visualize the results.
 
 ```python
@@ -245,7 +245,7 @@ plt.grid(True)
 plt.show()
 ```
 
-### 7. Visualize Decision Boundaries
+#### 7. Visualize Decision Boundaries
 Visualize how the classifier separates classes in the dataset.
 
 ```python
@@ -258,117 +258,205 @@ plt.ylabel('Feature 2')
 plt.title('Class Boundaries - YourDataset')
 plt.show()
 ```
+
+#### 8. Final Thoughts
+The K-Nearest Neighbors (KNN) classifier is a simple yet effective algorithm for classification tasks, where the model predicts the class of a data point based on the majority class of its nearest neighbors. The performance of KNN is highly influenced by the choice of k, with smaller values more sensitive to noise and larger values potentially underfitting. By evaluating accuracy across a range of k values and visualizing decision boundaries, we can find the optimal k for better generalization. While KNN is computationally expensive for large datasets and struggles with high-dimensional data, it remains a strong, interpretable choice for smaller datasets with well-defined boundaries.
 
 ### Naive Bayes Classifier
 
 The implementation of the Naive Bayes classification algorithm using custom Python code, designed to handle both text and numeric datasets. The model is trained, tested, and evaluated on two distinct datasets: a text dataset (such as emails) and a numeric dataset (such as feature vectors from various data sources). This approach eliminates the need for external machine learning libraries, highlighting a deep understanding of core machine learning concepts and feature engineering.
 
-## Prerequisites
+Before running the project, make sure you have the following libraries installed in your Python environment:  
+- **NumPy**  
+- **Pandas**  
+- **Matplotlib**  
+- **Random**
+- **os**
 
-1. Python installed on your system (3.7 or later recommended).
-2. Required libraries:
-   - `numpy`
-   - `pandas`
-3. A CSV file named `yourdataset.csv`.
-
----
-
-## Dataset Format
-
-Your dataset should include:
-- **Features:** Numerical values representing the input data for classification.
-- **Labels:** A column indicating whether the record belongs to class "0" (e.g., class A) or "1" (e.g., class B).
-
-Example format of `yourdataset.csv`:
-
-| feature1 | feature2 | feature3 | label |
-|----------|----------|----------|-------|
-| 1.2      | 0.8      | 3.1      | 1     |
-| 2.1      | 1.1      | 0.9      | 0     |
-
-- Features: `feature1`, `feature2`, `feature3`
-- Label: `label` (0 = class A, 1 = class B)
-
-### 1. Import Libraries
-
-Load the necessary libraries to handle data and implement the classifier.
+Install them using `pip`:
 
 ```python
+pip install numpy pandas matplotlib
+```
+
+#### **For Numeric Data**
+
+##### 1. Import Required Libraries
+
+```python
+import os
+import random
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
-from naive_bayes import NaiveBayes  # Custom Naive Bayes implementation
 ```
 
-### 2. Load the Dataset
-Load the dataset from a CSV file using pandas.
+##### 2. Load and Visualize Data
+Begin by loading the dataset into your Python environment. You can visualize the first few rows of the dataset to understand its structure.
 
 ```python
-data = pd.read_csv('yourdataset.csv')
+# Load the dataset
+dataset_path = 'path_to_your_dataset.csv'  # Replace with actual file path
+data = pd.read_csv(dataset_path)
+
+# Visualize the first few rows of the dataset
+print(data.head())
+
+# Separate features (X) and labels (y)
+X = data.drop(columns=['label']).values  # Replace 'label' with your target column name
+y = data['label'].values  # Replace 'label' with your target column name
+
+# Optionally, visualize data distribution for target labels
+print("Label distribution:")
+print(pd.Series(y).value_counts())
 ```
 
-### 3. Extract Features and Labels
-Extract feature columns (input variables) into X. Extract target labels into y.
+##### 3. Train-Test Split
+The data is split into training and testing sets using a custom train_test_split function, ensuring that the dataset is shuffled before splitting.
 
 ```python
-X = data[['feature1', 'feature2', 'feature3']].values
-y = data['label'].values
+# Custom train_test_split function
+def train_test_split_custom(data, labels, test_size=0.2, random_seed=None):
+    if random_seed is not None:
+        np.random.seed(random_seed)
+
+    data = np.array(data)
+    labels = np.array(labels)
+
+    # Shuffle data and labels in unison
+    indices = np.arange(data.shape[0])
+    np.random.shuffle(indices)
+    data = data[indices]
+    labels = labels[indices]
+
+    # Split the dataset
+    test_size_count = int(test_size * len(data))
+    X_test = data[:test_size_count]
+    y_test = labels[:test_size_count]
+    X_train = data[test_size_count:]
+    y_train = labels[test_size_count:]
+
+    return X_train, X_test, y_train, y_test
+
+# Split the dataset using the custom function
+X_train, X_test, y_train, y_test = train_test_split_custom(X, y, test_size=0.2, random_seed=42)
 ```
 
-### 4. Predict Using KNN
-Use the trained classifier to make predictions. Choose a value for k (e.g., k=1 or k=2).
+##### 4. Initialize and Train Naive Bayes Classifier
+Now, initialize the Naive Bayes classifier and train it on the training data. The custom classifier will calculate the class priors and feature likelihoods.
 
 ```python
-k = 3
-y_pred = classifier.predict(X, k)
+from naive_bayes import NaiveBayes  # Import the custom Naive Bayes class
+
+# Initialize and train the Naive Bayes classifier
+num_classes = len(np.unique(y))  # Calculate the number of unique classes
+nb_classifier = NaiveBayes(num_classes=num_classes)
+
+nb_classifier.train(X_train, y_train)
 ```
 
-### 5. Evaluate Model Accuracy
-Calculate the accuracy of the predictions.
+##### 5. Make Predictions and Evaluate the Model
+Use the trained Naive Bayes model to make predictions on the test set, then evaluate its accuracy and generate a confusion matrix.
 
 ```python
-accuracy = classifier.accuracy(y, y_pred)
-print(f'Accuracy with K={k}: {accuracy:.2f}')
+# Make predictions on the test set
+y_pred = nb_classifier.predict(X_test)
+
+# Evaluate the classifier
+accuracy = nb_classifier.accuracy(y_test, y_pred)
+print(f"Accuracy: {accuracy:.2f}%")
+
+# Generate and display a confusion matrix
+conf_matrix = nb_classifier.confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:")
+print(conf_matrix)
 ```
-### 6. Find the Best k Value
-To find the optimal k for your dataset, compute accuracy for a range of k values and visualize the results.
+
+##### 6. Visualize the Confusion Matrix
+Visualizing the confusion matrix helps in understanding the performance of the classifier.
 
 ```python
-k_values = list(range(1, 16))
-accuracies = []
-
-for k in k_values:
-    y_pred = classifier.predict(X, k)
-    acc = classifier.accuracy(y, y_pred)
-    accuracies.append(acc)
-
-# Plot accuracy vs. k
-plt.figure(figsize=(10, 6))
-plt.plot(k_values, accuracies, marker='o')
-plt.xlabel('k')
-plt.ylabel('Accuracy')
-plt.title('Accuracy vs. k - YourDataset')
-plt.grid(True)
+# Visualize the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=np.unique(y), yticklabels=np.unique(y))
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
 plt.show()
 ```
 
-### 7. Visualize Decision Boundaries
-Visualize how the classifier separates classes in the dataset.
+#### **For Text Data**
+
+##### 1. Import Required Libraries
 
 ```python
-best_k = 3  # Replace with the optimal k value
-n_sample_pts = 100  # Number of points to sample for visualization
-classifier.plot_predictions(best_k, n_sample_pts)
+import os
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+```
 
-plt.xlabel('Feature 1')
-plt.ylabel('Feature 2')
-plt.title('Class Boundaries - YourDataset')
+##### 2. Preprocess the Text Dataset
+Assume that the text dataset is a collection of text samples (such as documents or sentences) with corresponding labels. The preprocessing steps remain largely the same, but now you’re working with a general text dataset.
+
+```python
+import email_preprocessor as epp
+# Count words across the entire dataset (general text data)
+word_freq, num_samples = epp.count_words(email_path='data/text')  # Change to your text dataset path
+
+# Find the top `num_features` most frequent words in the dataset
+top_words, counts = epp.find_top_words(word_freq, num_features=200)
+
+# Generate feature vectors for each text sample (document/line/sentence)
+features, labels = epp.make_feature_vectors(top_words, num_samples, email_path='data/text')  # Update path
+
+# Split the dataset into training and test sets
+x_train, y_train, inds_train, x_test, y_test, inds_test = epp.make_train_test_sets(features, labels, test_prop=0.2, shuffle=True)
+```
+
+##### 3. Train the Naive Bayes Classifier
+The data is split into training and testing sets using a custom train_test_split function, ensuring that the dataset is shuffled before splitting.
+
+```python
+# Initialize Naive Bayes with the number of classes (you can adjust this for your dataset)
+nb = NaiveBayes(num_classes=2)  # Assuming binary classification for now (e.g., spam vs. non-spam)
+
+# Train the Naive Bayes classifier
+nb.train(x_train, y_train)
+```
+
+##### 4. Make Predictions and Evaluate the Model
+Make predictions using the trained model and evaluate its performance on the test data.
+
+```python
+# Make Predictions and Evaluate
+# Predict the classes for the test data
+y_pred = nb.predict(x_test)
+
+# Calculate the accuracy of the model
+accuracy = nb.accuracy(y_test, y_pred)
+print(f'Accuracy: {accuracy:.2f}%')
+
+# Create and display the confusion matrix
+conf_matrix = nb.confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:")
+print(conf_matrix)
+
+# Optionally, visualize the confusion matrix
+fig, ax = plt.subplots()
+cax = ax.matshow(conf_matrix, cmap='Blues')
+fig.colorbar(cax)
+ax.set_xticklabels([''] + ['Class 0', 'Class 1'])  # Update according to your labels
+ax.set_yticklabels([''] + ['Class 0', 'Class 1'])  # Update according to your labels
+plt.xlabel('Predicted')
+plt.ylabel('True')
+plt.title('Confusion Matrix')
 plt.show()
 ```
 
-
-### 10. Final Thoughts
-
-Once the K-Means clustering process is complete, you can use the results to analyze the data. The visualizations will give you insights into how your data is grouped and whether it corresponds to any meaningful patterns. Keep in mind that K-Means is sensitive to initial centroid placement and may require multiple runs for stable results.
+##### 10. Final Thoughts
+The Naive Bayes classifier is a fundamental and widely-used machine learning model based on Bayes' theorem, often utilized for both text and numeric data classification tasks. Its simplicity and efficiency make it especially useful for applications like spam detection and document categorization. While Naive Bayes assumes feature independence, which may not always hold in real-world scenarios, it still performs surprisingly well in practice, particularly when features are conditionally independent or nearly so. By leveraging custom code for training, testing, and evaluation, this implementation enhances your understanding of machine learning principles, including probability calculations, data preprocessing, and model evaluation. Although Naive Bayes may struggle with datasets that violate the independence assumption or have highly correlated features, it remains a fast and interpretable tool for classification tasks, especially in text-based domains.
 
 ## 📈 Example Project: Email Classifier Model Comparison
 
