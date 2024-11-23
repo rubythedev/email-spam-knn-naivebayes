@@ -455,9 +455,123 @@ plt.title('Confusion Matrix')
 plt.show()
 ```
 
-##### 10. Final Thoughts
+##### Final Thoughts
 The Naive Bayes classifier is a fundamental and widely-used machine learning model based on Bayes' theorem, often utilized for both text and numeric data classification tasks. Its simplicity and efficiency make it especially useful for applications like spam detection and document categorization. While Naive Bayes assumes feature independence, which may not always hold in real-world scenarios, it still performs surprisingly well in practice, particularly when features are conditionally independent or nearly so. By leveraging custom code for training, testing, and evaluation, this implementation enhances your understanding of machine learning principles, including probability calculations, data preprocessing, and model evaluation. Although Naive Bayes may struggle with datasets that violate the independence assumption or have highly correlated features, it remains a fast and interpretable tool for classification tasks, especially in text-based domains.
 
 ## 📈 Example Project: Email Classifier Model Comparison
 
-coming soon
+### Step 1: Import Required Libraries and Setup
+Set up the environment by importing necessary libraries for data processing, visualization, and numerical operations. Update plotting styles and print settings for better readability.
+
+```python
+import os
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+plt.style.use(['seaborn-colorblind', 'seaborn-darkgrid'])
+plt.rcParams.update({'font.size': 20})
+
+np.set_printoptions(suppress=True, precision=5)
+
+# Automatically reload external modules
+%load_ext autoreload
+%autoreload 2
+```
+
+### Step 2: Preprocess Emails
+Use a custom preprocessing module to extract features and labels for email classification. Test utility functions like `count_words` and `find_top_words` to identify significant terms and generate feature vectors.
+
+```python
+import email_preprocessor as epp
+
+#### Test `count_words` and `find_top_words`
+top_words, top_counts = epp.find_top_words(word_freq)
+features, y = epp.make_feature_vectors(top_words, num_emails)
+```
+
+### Step 3: Split Data into Training and Testing Sets
+Split the processed data into training and testing sets with a fixed random seed for reproducibility.
+
+```python
+np.random.seed(0)
+x_train, y_train, inds_train, x_test, y_test, inds_test = epp.make_train_test_sets(features, y)
+```
+
+### Step 4: Save Data in Binary Format
+Save the training and testing data into `.npy` files for efficient storage and quick access in future runs.
+
+```python
+np.save('data/email_train_x.npy', x_train)
+np.save('data/email_train_y.npy', y_train)
+np.save('data/email_train_inds.npy', inds_train)
+np.save('data/email_test_x.npy', x_test)
+np.save('data/email_test_y.npy', y_test)
+np.save('data/email_test_inds.npy', inds_test)
+```
+
+### Step 5: Load Preprocessed Data
+Reload the preprocessed data from the saved binary files to use in model training and evaluation.
+
+```python
+x_train = np.load('data/email_train_x.npy')
+y_train = np.load('data/email_train_y.npy')
+inds_train = np.load('data/email_train_inds.npy')
+x_test = np.load('data/email_test_x.npy')
+y_test = np.load('data/email_test_y.npy')
+inds_test = np.load('data/email_test_inds.npy')
+```
+
+### Step 6: Train Naive Bayes on Email Data
+Train the Naive Bayes classifier on the email dataset and predict the test set labels. Compute the classification accuracy.
+
+```python
+num_classes = 2
+enron_nbc = NaiveBayes(num_classes=num_classes)
+
+enron_nbc.train(x_train, y_train)
+
+test_y_pred = enron_nbc.predict(x_test)
+
+accuracy = enron_nbc.accuracy(y_test, test_y_pred)
+
+print(f"Accuracy: {accuracy:.2f}%")
+```
+
+### Step 7: Compute Confusion Matrix
+Generate a confusion matrix to evaluate the model's performance in terms of true positives, false positives, true negatives, and false negatives.
+
+```python
+confusion_matrix = enron_nbc.confusion_matrix(y_test, test_y_pred)
+print(confusion_matrix)
+```
+
+### Step 9: Comparison with KNN
+Compare the Naive Bayes results with a k-Nearest Neighbors (KNN) model to understand performance differences in accuracy and confusion matrix.
+
+```python
+from knn import KNN
+
+x_train = np.load('data/email_train_x.npy')
+y_train = np.load('data/email_train_y.npy')
+inds_train = np.load('data/email_train_inds.npy')
+x_test = np.load('data/email_test_x.npy')
+y_test = np.load('data/email_test_y.npy')
+inds_test = np.load('data/email_test_inds.npy')
+num_classes = 2
+
+enron_knn = KNN(num_classes)
+enron_knn.train(x_train, y_train)
+
+test_y_pred = enron_knn.predict(x_test, k=3)
+
+accuracy = enron_knn.accuracy(y_test, test_y_pred)
+print(f"Accuracy: {accuracy:.2f}%")
+
+confusion_matrix = enron_knn.confusion_matrix(y_test, test_y_pred)
+print(confusion_matrix)
+```
+
+### Final Thoughts
+This project showcased the end-to-end process of building and evaluating email classification models using Naive Bayes and k-Nearest Neighbors (KNN). It covered preprocessing data, splitting datasets, training models, and comparing performance through accuracy and confusion matrices. Naive Bayes demonstrated strong results with its probabilistic approach, while KNN offered a non-parametric alternative. Future improvements could include exploring advanced feature engineering, optimizing hyperparameters, and testing on larger datasets to enhance scalability and real-world applicability.
